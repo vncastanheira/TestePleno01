@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TestePleno.Models;
 using TestePleno.Services;
 
@@ -22,9 +19,31 @@ namespace TestePleno.Controllers
         public void CreateFare(Fare fare, string operatorCode)
         {
             var selectedOperator = _operatorService.GetOperatorByCode(operatorCode);
-            fare.OperatorId = selectedOperator.Id;
+            if (selectedOperator == null)
+            {
+                selectedOperator = new Operator { Id = Guid.NewGuid(), Code = operatorCode };
+                _operatorService.Create(selectedOperator);
+            }
 
-            FareService.Create(fare);
+            // check for any active fare in selected operator
+            if (!FareService.GetFares()
+                .Any(f => {
+                    var span = DateTimeOffset.UtcNow - f.CreatedOn;
+                    var months = Math.Floor(span.TotalDays / 30); // for simplicity
+
+                    return f.OperatorId == selectedOperator.Id && f.Status == 1 && months <= 6;
+                }))
+            {
+                fare.OperatorId = selectedOperator.Id;
+                fare.Status = 1;
+                fare.CreatedOn = DateTimeOffset.UtcNow;
+                FareService.Create(fare);
+            }
+            else
+            {
+                throw new Exception($"Erro: não é possível cadastrar nova tarifa para {operatorCode}.\n"+
+                                     "Motivo: { operatorCode } possui uma tarifa ativa.");
+            }
         }
     }
 }

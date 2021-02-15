@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TestePleno.Models;
 
 namespace TestePleno.Services
@@ -10,6 +8,7 @@ namespace TestePleno.Services
     public class OperatorService
     {
         public Repository _repository = new Repository();
+
 
         public Operator GetOperatorByCode(string code)
         {
